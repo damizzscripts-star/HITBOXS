@@ -1,0 +1,389 @@
+-- SERVIÇOS
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+
+-- 1. SÓ EXECUTA 1 VEZ (DESTRÓI O ANTIGO)
+local GUI_NAME = "HitboxPureScaleOps"
+local parentTarget = (gethui and gethui()) or CoreGui or playerGui
+if parentTarget:FindFirstChild(GUI_NAME) then parentTarget[GUI_NAME]:Destroy() end
+
+-- 2. SCREEN GUI
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = GUI_NAME
+mainGui.ResetOnSpawn = false
+mainGui.Parent = parentTarget
+
+-- FUNÇÃO ARRASTÁVEL PERFEITA
+local function makeDraggable(obj)
+	local dragging, dragInput, mousePos, framePos
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			mousePos = input.Position
+			framePos = obj.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	obj.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - mousePos
+			obj.Position = UDim2.new(
+				framePos.X.Scale,
+				framePos.X.Offset + delta.X,
+				framePos.Y.Scale,
+				framePos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+-- 3. LOGO
+local logoBtn = Instance.new("ImageButton")
+logoBtn.Size = UDim2.new(0, 55, 0, 55)
+logoBtn.Position = UDim2.new(1, -70, 0, 20)
+logoBtn.BackgroundColor3 = Color3.fromRGB(30,30,35)
+logoBtn.BackgroundTransparency = 0.2
+logoBtn.Image = "rbxthumb://type=Asset&id=8540565941&w=150&h=150" 
+logoBtn.Parent = mainGui
+Instance.new("UICorner", logoBtn).CornerRadius = UDim.new(0, 12)
+makeDraggable(logoBtn)
+
+-- 4. PAINEL PRINCIPAL
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 260, 0, 0)
+panel.Position = UDim2.new(0.5, -130, 0.4, 0)
+panel.Visible = false
+panel.Parent = mainGui
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 16)
+makeDraggable(panel)
+
+-- FUNDO RAINBOW
+local panelGradient = Instance.new("UIGradient", panel)
+panelGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 150)),
+	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 0, 0)),
+	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 0)),
+	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 100)),
+	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 255, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 0, 255))
+})
+RunService.RenderStepped:Connect(function(dt) panelGradient.Rotation = (panelGradient.Rotation + dt * 120) % 360 end)
+
+-- SEGUNDA CAMADA PRETA
+local inner = Instance.new("Frame", panel)
+inner.Size = UDim2.new(1, -10, 0, 0)
+inner.Position = UDim2.new(0, 5, 0, 5)
+inner.BackgroundColor3 = Color3.new(0,0,0)
+inner.BackgroundTransparency = 0.4
+inner.AutomaticSize = Enum.AutomaticSize.Y
+Instance.new("UICorner", inner).CornerRadius = UDim.new(0, 12)
+
+local layout = Instance.new("UIListLayout", inner)
+layout.Padding = UDim.new(0, 10); layout.HorizontalAlignment = "Center"
+layout.VerticalAlignment = "Top"; layout.SortOrder = "LayoutOrder"
+Instance.new("UIPadding", inner).PaddingTop = UDim.new(0, 10)
+Instance.new("UIPadding", inner).PaddingBottom = UDim.new(0, 10)
+
+inner:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+	panel.Size = UDim2.new(0, 260, 0, inner.AbsoluteSize.Y + 10)
+end)
+
+logoBtn.MouseButton1Click:Connect(function() panel.Visible = not panel.Visible end)
+
+-- ESTILIZAÇÃO DOS BOTÕES
+local function style(obj, order)
+	obj.LayoutOrder = order
+	obj.Size = UDim2.new(0.9, 0, 0, 40)
+	obj.BackgroundColor3 = Color3.fromRGB(35,35,45)
+	obj.BackgroundTransparency = 0.3
+	obj.TextColor3 = Color3.fromRGB(150, 220, 255)
+	obj.Font = "SourceSansBold"; obj.TextSize = 16
+	Instance.new("UICorner", obj).CornerRadius = UDim.new(0, 8)
+	local s = Instance.new("UIStroke", obj)
+	s.Color = Color3.fromRGB(90,90,110); s.Thickness = 1.5
+end
+
+-- 5. TÍTULO
+local title = Instance.new("TextLabel", inner)
+title.LayoutOrder = 0; title.Size = UDim2.new(0.9, 0, 0, 30)
+title.BackgroundTransparency = 1; title.Text = "HITBOXES OPS"
+title.TextColor3 = Color3.new(1,1,1); title.Font = "SourceSansBold"; title.TextSize = 24
+
+local titleGrad = Instance.new("UIGradient", title)
+titleGrad.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 255)),
+	ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 255, 100)),
+	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(100, 255, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 100))
+})
+titleGrad.Rotation = 90
+local tCounter = 0
+RunService.RenderStepped:Connect(function(dt)
+	tCounter = tCounter + (dt * 2)
+	titleGrad.Offset = Vector2.new(0, (math.sin(tCounter) * 0.8))
+end)
+
+-- VARIÁVEIS DE CONTROLE
+local selectedPlayers = {} 
+local selectedHitbox = "HEAD" 
+local isEnabled = false
+
+-- FUNÇÃO PARA RESETAR AS PARTES DE UM PLAYER
+local function resetPlayerParts(char)
+	if not char then return end
+	local head = char:FindFirstChild("Head")
+	local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local mesh = head and head:FindFirstChildOfClass("SpecialMesh")
+	
+	if head then
+		head.Size = Vector3.new(2, 1, 1); head.Transparency = 0
+		head.BrickColor = BrickColor.new("Medium stone grey")
+		head.Material = Enum.Material.Plastic; head.CanCollide = true
+		head.Massless = false; head.CustomPhysicalProperties = nil
+	end
+	if mesh then mesh.Scale = Vector3.new(1, 1, 1) end
+	if torso then
+		torso.Size = (torso.Name == "UpperTorso" and Vector3.new(2, 1, 1)) or Vector3.new(2, 2, 1)
+		torso.Transparency = 0; torso.BrickColor = BrickColor.new("Medium stone grey")
+		torso.Material = Enum.Material.Plastic; torso.CanCollide = true
+		torso.Massless = false; torso.CustomPhysicalProperties = nil
+	end
+	if hrp then
+		hrp.Size = Vector3.new(2, 2, 1); hrp.Transparency = 1
+		hrp.BrickColor = BrickColor.new("Medium stone grey")
+		hrp.Material = Enum.Material.Plastic; hrp.CanCollide = true
+	end
+end
+
+local function resetAllParts()
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p.Character then resetPlayerParts(p.Character) end
+	end
+end
+
+-- 6. SELECT PLAYERS
+local pBtn = Instance.new("TextButton", inner); style(pBtn, 1); pBtn.Text = "SELECT PLAYERS"
+local pScroll = Instance.new("ScrollingFrame", inner)
+pScroll.LayoutOrder = 2; pScroll.Size = UDim2.new(0.9, 0, 0, 80); pScroll.Visible = false
+pScroll.BackgroundColor3 = Color3.new(0,0,0); pScroll.BackgroundTransparency = 0.5; pScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", pScroll)
+
+local function updatePlayerButtonText()
+	if selectedPlayers["ALL"] then 
+		pBtn.Text = "SELECT: ALL"
+		return 
+	end
+	local list = {}
+	for name, _ in pairs(selectedPlayers) do table.insert(list, name) end
+	if #list == 0 then
+		pBtn.Text = "SELECT PLAYERS"
+	elseif #list == 1 then
+		pBtn.Text = "SEL: " .. list[1]
+	else
+		pBtn.Text = "SEL: " .. #list .. " players"
+	end
+end
+
+local updatePlayersDropdown
+updatePlayersDropdown = function()
+	for _, c in ipairs(pScroll:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+	
+	local function createOption(name)
+		local b = Instance.new("TextButton", pScroll)
+		b.Size = UDim2.new(1, 0, 0, 25)
+		b.Text = (selectedPlayers[name] and "[X] " or "[  ] ") .. name
+		b.TextColor3 = Color3.new(1,1,1); b.BackgroundTransparency = 0.8
+		b.Font = "SourceSansBold"; b.TextSize = 14
+		
+		b.MouseButton1Click:Connect(function()
+			if name == "ALL" then
+				if selectedPlayers["ALL"] then
+					selectedPlayers = {} 
+				else
+					selectedPlayers = { ["ALL"] = true } 
+				end
+			else
+				selectedPlayers["ALL"] = nil 
+				if selectedPlayers[name] then
+					selectedPlayers[name] = nil 
+					local playerObj = Players:FindFirstChild(name)
+					if playerObj and playerObj.Character then
+						resetPlayerParts(playerObj.Character) 
+					end
+				else
+					selectedPlayers[name] = true 
+				end
+			end
+			updatePlayerButtonText()
+			updatePlayersDropdown()
+		end)
+	end
+	
+	createOption("ALL")
+	for _, p in ipairs(Players:GetPlayers()) do 
+		if p ~= localPlayer then createOption(p.Name) end 
+	end
+end
+
+pBtn.MouseButton1Click:Connect(function() 
+	pScroll.Visible = not pScroll.Visible
+	if pScroll.Visible then updatePlayersDropdown() end
+end)
+
+-- 7. SELECT HITBOX
+local hBtn = Instance.new("TextButton", inner); style(hBtn, 3); hBtn.Text = "HITBOX: HEAD"
+local hScroll = Instance.new("ScrollingFrame", inner)
+hScroll.LayoutOrder = 4; hScroll.Size = UDim2.new(0.9, 0, 0, 80); hScroll.Visible = false
+hScroll.BackgroundColor3 = Color3.new(0,0,0); hScroll.BackgroundTransparency = 0.5; hScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", hScroll)
+
+local function updateHitboxDropdown()
+	for _, c in ipairs(hScroll:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+	local function createHitboxOption(name, code)
+		local b = Instance.new("TextButton", hScroll)
+		b.Size = UDim2.new(1, 0, 0, 25)
+		b.Text = (selectedHitbox == code and "[X] " or "[  ] ") .. name
+		b.TextColor3 = Color3.new(1,1,1); b.BackgroundTransparency = 0.8
+		b.Font = "SourceSansBold"; b.TextSize = 14
+		b.MouseButton1Click:Connect(function()
+			resetAllParts()
+			selectedHitbox = code
+			hBtn.Text = "HITBOX: " .. name
+			hScroll.Visible = false
+			updateHitboxDropdown()
+		end)
+	end
+	createHitboxOption("HITBOX HEAD", "HEAD")
+	createHitboxOption("HITBOX TORÇO", "TORSO")
+	createHitboxOption("HITBOX ROOT", "ROOT")
+end
+
+hBtn.MouseButton1Click:Connect(function()
+	hScroll.Visible = not hScroll.Visible
+	if hScroll.Visible then updateHitboxDropdown() end
+end)
+
+-- 8. TEXTBOX (TAMANHO)
+local box = Instance.new("TextBox", inner); style(box, 5)
+box.PlaceholderText = "Tamanho (Ex: 10, 20, 50)..."
+box.Text = "50"
+box:GetPropertyChangedSignal("Text"):Connect(function() box.Text = box.Text:gsub("%D", "") end)
+
+-- 9. BOTÃO ON/OFF
+local toggle = Instance.new("TextButton", inner); style(toggle, 6)
+toggle.Text = "HITBOX: OFF"
+toggle.MouseButton1Click:Connect(function()
+	isEnabled = not isEnabled
+	toggle.Text = isEnabled and "HITBOX: ON" or "HITBOX: OFF"
+	if not isEnabled then resetAllParts() end
+end)
+
+-- LOOP PRINCIPAL
+RunService.RenderStepped:Connect(function()
+	if not isEnabled then return end
+	
+	local sizeVal = tonumber(box.Text)
+	if not sizeVal or sizeVal <= 0 then sizeVal = 50 end
+
+	for _, v in ipairs(Players:GetPlayers()) do
+		if v ~= localPlayer and v.Character then
+			local shouldTarget = selectedPlayers["ALL"] or selectedPlayers[v.Name]
+			pcall(function()
+				local head = v.Character:FindFirstChild("Head")
+				local torso = v.Character:FindFirstChild("UpperTorso") or v.Character:FindFirstChild("Torso")
+				local hrp = v.Character:FindFirstChild("HumanoidRootPart")
+				local mesh = head and head:FindFirstChildOfClass("SpecialMesh")
+				
+				if shouldTarget then
+					if selectedHitbox == "HEAD" then
+						if torso then
+							torso.Size = (torso.Name == "UpperTorso" and Vector3.new(2, 1, 1)) or Vector3.new(2, 2, 1)
+							torso.Transparency = 0; torso.BrickColor = BrickColor.new("Medium stone grey")
+							torso.Material = Enum.Material.Plastic; torso.CanCollide = true
+							torso.Massless = false; torso.CustomPhysicalProperties = nil
+						end
+						if hrp then
+							hrp.Size = Vector3.new(2, 2, 1); hrp.Transparency = 1
+							hrp.BrickColor = BrickColor.new("Medium stone grey")
+							hrp.Material = Enum.Material.Plastic; hrp.CanCollide = true
+						end
+						if head then
+							-- Mantém proporção perfeita sem deformar a malha
+							head.Size = Vector3.new(sizeVal, sizeVal, sizeVal)
+							head.Transparency = 0.7
+							head.BrickColor = BrickColor.new("Really blue")
+							head.Material = Enum.Material.Neon
+							head.CanCollide = false
+							head.Massless = true
+							head.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+							if mesh then 
+								local scaleFactor = sizeVal / 2
+								mesh.Scale = Vector3.new(scaleFactor, scaleFactor, scaleFactor)
+							end
+						end
+					elseif selectedHitbox == "TORSO" then
+						if head then
+							head.Size = Vector3.new(2, 1, 1); head.Transparency = 0
+							head.BrickColor = BrickColor.new("Medium stone grey")
+							head.Material = Enum.Material.Plastic; head.CanCollide = true
+							head.Massless = false; head.CustomPhysicalProperties = nil
+							if mesh then mesh.Scale = Vector3.new(1, 1, 1) end
+						end
+						if hrp then
+							hrp.Size = Vector3.new(2, 2, 1); hrp.Transparency = 1
+							hrp.BrickColor = BrickColor.new("Medium stone grey")
+							hrp.Material = Enum.Material.Plastic; hrp.CanCollide = true
+						end
+						if torso then
+							torso.Size = Vector3.new(sizeVal, sizeVal, sizeVal)
+							torso.Transparency = 0.7
+							torso.BrickColor = BrickColor.new("Really blue")
+							torso.Material = Enum.Material.Neon
+							torso.CanCollide = false
+							torso.Massless = true
+							torso.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+						end
+					elseif selectedHitbox == "ROOT" then
+						if head then
+							head.Size = Vector3.new(2, 1, 1); head.Transparency = 0
+							head.BrickColor = BrickColor.new("Medium stone grey")
+							head.Material = Enum.Material.Plastic; head.CanCollide = true
+							head.Massless = false; head.CustomPhysicalProperties = nil
+							if mesh then mesh.Scale = Vector3.new(1, 1, 1) end
+						end
+						if torso then
+							torso.Size = (torso.Name == "UpperTorso" and Vector3.new(2, 1, 1)) or Vector3.new(2, 2, 1)
+							torso.Transparency = 0; torso.BrickColor = BrickColor.new("Medium stone grey")
+							torso.Material = Enum.Material.Plastic; torso.CanCollide = true
+							torso.Massless = false; torso.CustomPhysicalProperties = nil
+						end
+						if hrp then
+							hrp.Size = Vector3.new(sizeVal, sizeVal, sizeVal)
+							hrp.Transparency = 0.7
+							hrp.BrickColor = BrickColor.new("Really blue")
+							hrp.Material = Enum.Material.Neon
+							hrp.CanCollide = false
+						end
+					end
+				else
+					resetPlayerParts(v.Character)
+				end
+			end)
+		end
+	end
+end)
